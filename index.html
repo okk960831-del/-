@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抽直屬互動簡報</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&amp;family=Fraunces:opsz,wght@9..144,700;9..144,800&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #24313a;
+      --coral: #f26855;
+      --yellow: #ffd55c;
+      --teal: #217f82;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: "Alegreya Sans", sans-serif; color: var(--ink); }
+    .display-font { font-family: "Fraunces", serif; }
+    .view { display: none; }
+    .view.active { display: block; animation: rise .48s ease both; }
+    .paper-card {
+      border: 2px solid rgba(36,49,58,.13);
+      box-shadow: 7px 8px 0 rgba(36,49,58,.16);
+    }
+    .doodle { position: absolute; pointer-events: none; user-select: none; opacity: .8; }
+    .part-button, .photo-card { transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
+    .part-button:hover, .photo-card:hover:not(.is-picked) { transform: translateY(-5px) rotate(-1deg); }
+    .part-button:focus-visible, .photo-card:focus-visible, .back-button:focus-visible {
+      outline: 4px solid var(--ink);
+      outline-offset: 4px;
+    }
+    .photo-card.is-picked { opacity: .45; filter: grayscale(1); cursor: not-allowed; transform: none; }
+    .photo-card.is-picked .open-status { display: none; }
+    .photo-card.is-picked .picked-status { display: flex; }
+    .picked-status { display: none; }
+    .gallery-group { display: none; }
+    .gallery-group.active { display: grid; animation: rise .4s ease both; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+ </head>
+ <body class="w-full min-h-screen overflow-x-hidden" style="background: linear-gradient(135deg, rgb(255, 247, 232) 0%, rgb(252, 228, 208) 52%, rgb(217, 241, 236) 100%);">
+  <div class="relative w-full min-h-screen overflow-hidden px-4 py-7 sm:px-8 lg:px-12">
+   <div class="doodle left-4 top-10 text-5xl sm:left-10 sm:text-7xl">✦</div>
+   <div class="doodle right-5 top-20 text-5xl text-orange-400 sm:right-16">✿</div>
+   <div class="doodle bottom-8 left-6 h-20 w-20 rounded-full border-4 border-dashed border-teal-600 sm:left-16"></div>
+   <div class="doodle bottom-12 right-8 text-6xl sm:right-20">☻</div>
+   
+   <header class="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+     <div class="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#24313a] bg-[#ffd55c] text-xl font-bold">✦</div>
+     <span class="font-bold tracking-wide" style="color: rgb(36, 49, 58); font-weight: 800; font-size: 16px;">FAMILY MATCH</span>
+    </div>
+    <div class="rounded-full border-2 border-[#24313a] bg-white px-4 py-2 text-sm font-bold">先贏先選！</div>
+   </header>
+
+   <main class="relative z-10 mx-auto w-full max-w-6xl py-8 sm:py-12">
+    <!-- 首頁 -->
+    <section id="home-view" class="view active">
+     <div class="mx-auto max-w-3xl text-center">
+      <p class="mb-3 inline-block -rotate-2 rounded-full border-2 border-[#24313a] bg-[#ffd55c] px-5 py-2 font-bold">2026 新生限定 · FAMILY DRAFT</p>
+      <h1 class="display-font mb-4 font-bold leading-tight" style="color: rgb(36, 49, 58); font-size: 32px;">來抽你的直屬！</h1>
+      <p class="mx-auto max-w-2xl text-lg leading-relaxed sm:text-xl" style="color: rgb(66, 80, 90);">共有 41 個家族選項。選一個觀察部位，找出屬於你的直屬家族吧！</p>
+     </div>
+     <section class="paper-card mx-auto mt-9 max-w-4xl rounded-[2rem] bg-white p-5 sm:p-7">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+       <div>
+        <h2 class="font-bold" style="font-size: 24px;">遊戲規則</h2>
+        <p class="mt-1 text-lg" style="color: rgb(66, 80, 90);">點擊照片即可解鎖該組的直屬家族成員名單！</p>
+       </div>
+       <div id="picked-count" class="rounded-2xl bg-[#e1f3ed] px-5 py-3 text-center font-bold">已選 0 / 41 位</div>
+      </div>
+     </section>
+     <section class="mx-auto mt-9 max-w-5xl">
+      <h2 class="mb-5 text-center font-bold" style="font-size: 24px;">第一步：你想從哪裡開始猜？</h2>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <button type="button" class="part-button rounded-[1.7rem] border-2 border-[#24313a] bg-[#f9c8c0] p-5 text-left shadow-[5px_6px_0_#24313a]" data-group="finger" data-name="手"> 
+            <span class="mb-3 block text-4xl">☝</span> 
+            <span class="block font-bold" style="font-size: 23px;">手</span> 
+            <span class="mt-1 block text-sm">8 個選項</span> 
+        </button> 
+        <button type="button" class="part-button rounded-[1.7rem] border-2 border-[#24313a] bg-[#c7e8ef] p-5 text-left shadow-[5px_6px_0_#24313a]" data-group="eye" data-name="眼睛"> 
+            <span class="mb-3 block text-4xl">◉</span> 
+            <span class="block font-bold" style="font-size: 23px;">眼睛</span> 
+            <span class="mt-1 block text-sm">9 個選項</span> 
+        </button> 
+        <button type="button" class="part-button rounded-[1.7rem] border-2 border-[#24313a] bg-[#ffe29a] p-5 text-left shadow-[5px_6px_0_#24313a]" data-group="ear" data-name="耳朵"> 
+            <span class="mb-3 block text-4xl">◖</span> 
+            <span class="block font-bold" style="font-size: 23px;">耳朵</span> 
+            <span class="mt-1 block text-sm">8 個選項</span> 
+        </button> 
+        <button type="button" class="part-button rounded-[1.7rem] border-2 border-[#24313a] bg-[#d5d0f1] p-5 text-left shadow-[5px_6px_0_#24313a]" data-group="mouth" data-name="嘴巴"> 
+            <span class="mb-3 block text-4xl">👄</span> 
+            <span class="block font-bold" style="font-size: 23px;">嘴巴</span> 
+            <span class="mt-1 block text-sm">8 個選項</span> 
+        </button> 
+        <button type="button" class="part-button rounded-[1.7rem] border-2 border-[#24313a] bg-[#cfe8c9] p-5 text-left shadow-[5px_6px_0_#24313a]" data-group="shoe" data-name="鞋子"> 
+            <span class="mb-3 block text-4xl">👟</span> 
+            <span class="block font-bold" style="font-size: 23px;">鞋子</span> 
+            <span class="mt-1 block text-sm">8 個選項</span> 
+        </button>
+      </div>
+     </section>
+    </section>
+
+    <!-- 照片選擇區 -->
+    <section id="gallery-view" class="view">
+     <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+       <p id="chosen-part-label" class="mb-2 inline-block rounded-full bg-[#ffd55c] px-4 py-1 font-bold">觀察部位</p>
+       <h1 class="display-font font-bold" style="font-size: 32px;">選一張，揭曉直屬家族</h1>
+       <p class="mt-2 text-lg" style="color: rgb(66, 80, 90);">照片一經選取就會鎖定。</p>
+      </div>
+      <button id="gallery-back" type="button" class="back-button inline-flex items-center gap-2 rounded-full border-2 border-[#24313a] bg-white px-5 py-3 font-bold shadow-[3px_4px_0_#24313a]">換個部位</button>
+     </div>
+     
+     <!-- 各群組照片容器 (手 8組) -->
+     <div id="finger-group" class="gallery-group grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <button class="photo-card" data-person="finger-1" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://cdn.phototourl.com/free/2026-09-02-9dcf67c2-6971-4554-8080-64212e50906d.jpg"><span class="open-status">01</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="finger-2" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://cdn.phototourl.com/free/2026-09-02-0bba48f4-68fa-440f-9d92-930f07f24313.jpg"><span class="open-status">02</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="finger-3" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://cdn.phototourl.com/free/2026-09-02-f4c5abc4-a9b5-4050-9153-de526311199a.jpg"><span class="open-status">03</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="finger-4" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/ETTBDLO.jpg"><span class="open-status">04</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="finger-5" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/QPNZXlC.jpg"><span class="open-status">05</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="finger-6" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/7964510/pexels-photo-7964510.jpeg"><span class="open-status">06</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="finger-7" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/3726946/pexels-photo-3726946.jpeg"><span class="open-status">07</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="finger-8" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/6168342/pexels-photo-6168342.jpeg"><span class="open-status">08</span><span class="picked-status">已選走</span></button>
+     </div>
+     
+     <!-- 眼睛 9組 -->
+     <div id="eye-group" class="gallery-group grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <button class="photo-card" data-person="eye-1" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/2ehwdkX.jpg"><span class="open-status">01</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-2" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/75fz9Sw.jpg"><span class="open-status">02</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-3" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/GvTPGCl.jpg"><span class="open-status">03</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-4" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/u7yh3tV.jpg"><span class="open-status">04</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-5" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/1069588/pexels-photo-1069588.jpeg"><span class="open-status">05</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-6" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/792994/pexels-photo-792994.jpeg"><span class="open-status">06</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-7" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/37435076/pexels-photo-37435076.jpeg"><span class="open-status">07</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-8" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/7018681/pexels-photo-7018681.jpeg"><span class="open-status">08</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="eye-9" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/15858126/pexels-photo-15858126.jpeg"><span class="open-status">09</span><span class="picked-status">已選走</span></button> 
+     </div>
+     
+     <!-- 耳朵 8組 -->
+     <div id="ear-group" class="gallery-group grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <button class="photo-card" data-person="ear-1" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/12wK1ql.jpg"><span class="open-status">01</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="ear-2" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/xlv32Br.jpg"><span class="open-status">02</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="ear-3" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/Cdu8CgG.jpg"><span class="open-status">03</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="ear-4" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/nraLEfh.jpg"><span class="open-status">04</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="ear-5" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/briAVYg.jpg"><span class="open-status">05</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="ear-6" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/15785528/pexels-photo-15785528.jpeg"><span class="open-status">06</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="ear-7" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/7588266/pexels-photo-7588266.jpeg"><span class="open-status">07</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="ear-8" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/6857209/pexels-photo-6857209.jpeg"><span class="open-status">08</span><span class="picked-status">已選走</span></button> 
+     </div>
+     
+     <!-- 嘴巴 8組 -->
+     <div id="mouth-group" class="gallery-group grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <button class="photo-card" data-person="mouth-1" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/pOnrQ5D.png"><span class="open-status">01</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="mouth-2" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/F2xHRiE.jpg"><span class="open-status">02</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="mouth-3" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/aJKJ012.jpg"><span class="open-status">03</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="mouth-4" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/7tTMEMN.jpg"><span class="open-status">04</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="mouth-5" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/QRN77dn.jpg"><span class="open-status">05</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="mouth-6" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://i.meee.com.tw/56sPOAn.jpg"><span class="open-status">06</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="mouth-7" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/18609432/pexels-photo-18609432.jpeg"><span class="open-status">07</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="mouth-8" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/32452826/pexels-photo-32452826.jpeg"><span class="open-status">08</span><span class="picked-status">已選走</span></button> 
+     </div>
+     
+     <!-- 鞋子 8組 -->
+     <div id="shoe-group" class="gallery-group grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <button class="photo-card" data-person="shoe-1" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/16999282/pexels-photo-16999282.jpeg"><span class="open-status">01</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="shoe-2" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/8733932/pexels-photo-8733932.jpeg"><span class="open-status">02</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="shoe-3" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/16195409/pexels-photo-16195409.jpeg"><span class="open-status">03</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="shoe-4" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/5865231/pexels-photo-5865231.jpeg"><span class="open-status">04</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="shoe-5" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/9207813/pexels-photo-9207813.jpeg"><span class="open-status">05</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="shoe-6" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/33463772/pexels-photo-33463772.jpeg"><span class="open-status">06</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="shoe-7" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/34871894/pexels-photo-34871894.jpeg"><span class="open-status">07</span><span class="picked-status">已選走</span></button> 
+        <button class="photo-card" data-person="shoe-8" type="button"><img loading="lazy" class="h-44 w-full rounded-[1.5rem] border-2 border-[#24313a] object-cover sm:h-52" src="https://images.pexels.com/photos/36750770/pexels-photo-36750770.jpeg"><span class="open-status">08</span><span class="picked-status">已選走</span></button>
+     </div>
+    </section>
+
+    <!-- 結果檢視畫面（顯示家族名單） -->
+    <section id="result-view" class="view">
+     <div class="paper-card mx-auto max-w-3xl rounded-[2rem] bg-white p-8 text-center sm:p-12">
+      <p class="inline-block rounded-full bg-[#ffd55c] px-4 py-2 font-bold">選擇完成！</p>
+      <h1 class="display-font mt-3 font-bold" style="font-size: 32px;">你的直屬家族登場</h1>
+      <p id="result-subtitle" class="mt-2 text-lg font-bold text-[#f26855]"></p>
+      
+      <!-- 家族成員列表顯示區 -->
+      <div id="family-members-container" class="mt-6 rounded-2xl bg-[#fff7e8] border-2 border-[#24313a] p-6 text-left">
+        <h3 class="font-bold text-xl mb-3 text-center">🌿 家族成員名單 🌿</h3>
+        <ul id="family-list" class="space-y-2 text-lg font-medium text-center">
+          <!-- 這裡會自動填入名單 -->
+        </ul>
+      </div>
+
+      <button id="home-back" type="button" class="back-button mt-8 inline-flex items-center gap-2 rounded-full border-2 border-[#24313a] bg-[#f26855] px-7 py-4 font-bold text-white shadow-[4px_5px_0_#24313a]">回到主頁，繼續抽直屬</button>
+     </div>
+    </section>
+   </main>
+
+   <footer class="relative z-10 mx-auto w-full max-w-6xl pb-2 text-center text-sm font-bold opacity-70">抽直屬遊戲 · 41 個家族等你發現！</footer>
+  </div>
+
+  <script>
+    // 每張照片對應的家族成員（你可以在引號中替換為真實的學長姐姓名）
+    const familyData = {
+      // 手 (8組)
+      "finger-1": ["大學長：王大明", "學姐：陳小美", "直屬：林小華"],
+      "finger-2": ["學長：張偉", "學姐：李雅婷"],
+      "finger-3": ["家族長：黃志豪", "學姐：林怡君", "直屬：吳冠廷"],
+      "finger-4": ["學長：郭靖", "學姐：黃蓉"],
+      "finger-5": ["學長：陳信安", "學姐：張鈞甯", "直屬：彭政閔"],
+      "finger-6": ["學長：周杰倫", "學姐：昆凌"],
+      "finger-7": ["學長：林書豪", "學姐：蔡依林"],
+      "finger-8": ["學長：五月天阿信", "學姐：Ella"],
+
+      // 眼睛 (9組)
+      "eye-1": ["學長：趙子龍", "學姐：孫尚香", "直屬：劉備"],
+      "eye-2": ["學長：諸葛亮", "學姐：黃月英"],
+      "eye-3": ["學長：曹操", "學姐：甄姬"],
+      "eye-4": ["學長：周瑜", "學姐：小喬"],
+      "eye-5": ["學長：孫權", "學姐：大喬"],
+      "eye-6": ["學長：司馬懿", "學姐：張春華"],
+      "eye-7": ["學長：關羽", "學姐：胡金錠"],
+      "eye-8": ["學長：張飛", "學姐：夏侯氏"],
+      "eye-9": ["學長：趙雲", "學姐：馬雲騄"],
+
+      // 耳朵 (8組)
+      "ear-1": ["學長：柯南", "學姐：小蘭", "直屬：灰原哀"],
+      "ear-2": ["學長：魯夫", "學姐：娜美"],
+      "ear-3": ["學長：索隆", "學姐：羅賓"],
+      "ear-4": ["學長：香吉士", "學姐：布魯克"],
+      "ear-5": ["學長：鳴人", "學姐：雛田"],
+      "ear-6": ["學長：佐助", "學姐：小櫻"],
+      "ear-7": ["學長：卡卡西", "學姐：綱手"],
+      "ear-8": ["學長：自來也", "學姐：大蛇丸"],
+
+      // 嘴巴 (8組)
+      "mouth-1": ["學長：鋼鐵人", "學姐：黑寡婦"],
+      "mouth-2": ["學長：美國隊長", "學姐：卡特探員"],
+      "mouth-3": ["學長：雷神索爾", "學姐：女武神"],
+      "mouth-4": ["學長：蜘蛛人", "學姐：MJ"],
+      "mouth-5": ["學長：奇異博士", "學姐：汪達"],
+      "mouth-6": ["學長：黑豹", "學姐：舒莉"],
+      "mouth-7": ["學長：蟻人", "學姐：黃蜂女"],
+      "mouth-8": ["學長：洛基", "學姐：希芙"],
+
+      // 鞋子 (8組)
+      "shoe-1": ["學長：Mario", "學姐：Peach"],
+      "shoe-2": ["學長：Luigi", "學姐：Daisy"],
+      "shoe-3": ["學長：Sonic", "學姐：Amy"],
+      "shoe-4": ["學長：Link", "學姐：Zelda"],
+      "shoe-5": ["學長：Kirby", "學姐：Waddle"],
+      "shoe-6": ["學長：Pikachu", "學姐：Eevee"],
+      "shoe-7": ["學長：Cloud", "學姐：Tifa"],
+      "shoe-8": ["學長：Sora", "學姐：Kairi"]
+    };
+
+    const selectedPeople = new Set();
+    const views = document.querySelectorAll(".view");
+    const groups = document.querySelectorAll(".gallery-group");
+    const cards = document.querySelectorAll(".photo-card");
+    const count = document.getElementById("picked-count");
+    const resultSubtitle = document.getElementById("result-subtitle");
+    const familyList = document.getElementById("family-list");
+
+    function showView(id) {
+      views.forEach(view => view.classList.toggle("active", view.id === id));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function updateCards() {
+      count.textContent = `已選 ${selectedPeople.size} / 41 位`;
+      cards.forEach(card => {
+        const picked = selectedPeople.has(card.dataset.person);
+        card.classList.toggle("is-picked", picked);
+        card.disabled = picked;
+        card.setAttribute("aria-disabled", String(picked));
+      });
+    }
+
+    document.querySelectorAll(".part-button").forEach(button => {
+      button.addEventListener("click", () => {
+        const group = button.dataset.group;
+        document.getElementById("chosen-part-label").textContent = `本輪觀察：${button.dataset.name}`;
+        groups.forEach(item => item.classList.toggle("active", item.id === `${group}-group`));
+        updateCards();
+        showView("gallery-view");
+      });
+    });
+
+    document.getElementById("gallery-back").addEventListener("click", () => showView("home-view"));
+
+    cards.forEach(card => {
+      card.addEventListener("click", () => {
+        const personKey = card.dataset.person;
+        if (selectedPeople.has(personKey)) return;
+        
+        selectedPeople.add(personKey);
+        const [group, number] = personKey.split("-");
+        const labels = { finger: "手", eye: "眼睛", ear: "耳朵", mouth: "嘴巴", shoe: "鞋子" };
+        
+        resultSubtitle.textContent = `你抽中了「${labels[group]}組」第 ${String(number).padStart(2, "0")} 號家族！`;
+        
+        // 渲染該家族的所有成員名單
+        familyList.innerHTML = "";
+        const members = familyData[personKey] || ["尚無登記成員"];
+        members.forEach(member => {
+          const li = document.createElement("li");
+          li.textContent = member;
+          familyList.appendChild(li);
+        });
+
+        updateCards();
+        showView("result-view");
+      });
+    });
+
+    document.getElementById("home-back").addEventListener("click", () => showView("home-view"));
+  </script>
+</body>
+</html>
